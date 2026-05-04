@@ -16,6 +16,7 @@ const PlayerWaitIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="24"
 const QuestionIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>);
 const CloseIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
 const TeacherIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22h20"/><path d="M12 2v20"/><path d="M4 14h16"/><path d="M4 6h16"/><path d="M9 22v-8h6v8"/><circle cx="12" cy="10" r="2"/></svg>);
+const WarningIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>);
 
 const defaultPlayers = [
     { id: 1, name: "Player 1", color: "red", position: 0, score: 0 },
@@ -35,6 +36,9 @@ function Lobby() {
 
     const [isGuru, setIsGuru] = useState(false);
     const [showRules, setShowRules] = useState(false);
+
+    // FIX: Tambah State khusus buat Modal Keluar Lobi
+    const [showExitModal, setShowExitModal] = useState(false);
 
     const navigate = useNavigate();
 
@@ -139,7 +143,7 @@ function Lobby() {
         const { data: game, error: fetchError } = await supabase.from('games').select('*').eq('join_code', joinCode.trim()).single();
 
         if (fetchError || !game) { setLoading(false); setError('Kodenya tidak ditemukan. Coba cek lagi!'); return; }
-        if (game.players.length >= 4) { setLoading(false); setError('Yah, permainannya sudah penuh maksimal 4 orang!'); return; } // Teks error diupdate dikit
+        if (game.players.length >= 4) { setLoading(false); setError('Yah, permainannya sudah penuh maksimal 4 orang!'); return; }
 
         const newPlayerId = game.players.length + 1;
         const newPlayer = { ...defaultPlayers.find(p => p.id === newPlayerId), name: playerName };
@@ -157,28 +161,32 @@ function Lobby() {
         }
     };
 
-    // FIX: Game bisa dimulai kalau pemain >= 2
     const handleStartGame = async () => {
         if (gameData.players.length < 2) { setError('Tunggu minimal 2 peserta ya!'); return; }
         setLoading(true);
         await supabase.from('games').update({ phase: 'quiz' }).eq('id', gameData.id);
-        setLoading(false); // Balikin loading jadi false biar gak stuck kalau ada error (meskipun aman sih harusnya)
+        setLoading(false);
     };
 
-    const handleQuitLobby = async () => {
-        if (window.confirm("Yakin mau keluar? Ini akan membatalkan lobi untuk semua orang lho!")) {
-            setLoading(true);
-            if (gameData?.id) {
-                await supabase.from('games').update({ finished: true }).eq('id', gameData.id);
-            }
-            const keys = Object.keys(localStorage);
-            keys.forEach(key => {
-                if (key.startsWith('tanggapoly_player_id_') || key.startsWith('tanggapoly_is_creator_')) {
-                    localStorage.removeItem(key);
-                }
-            });
-            window.location.reload();
+    // FIX: Fungsi cuma buat nampilin Modal customnya
+    const promptQuitLobby = () => {
+        setShowExitModal(true);
+    }
+
+    // FIX: Fungsi Asli buat Eksekusi Keluar dari Database
+    const executeQuitLobby = async () => {
+        setShowExitModal(false);
+        setLoading(true);
+        if (gameData?.id) {
+            await supabase.from('games').update({ finished: true, phase: 'cancelled' }).eq('id', gameData.id);
         }
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+            if (key.startsWith('tanggapoly_player_id_') || key.startsWith('tanggapoly_is_creator_')) {
+                localStorage.removeItem(key);
+            }
+        });
+        window.location.reload();
     }
 
     const handleLogoutGuru = () => {
@@ -187,13 +195,13 @@ function Lobby() {
     };
 
     const renderWaitingLobby = () => {
-        // FIX: isReadyToStart bernilai true kalo jumlah pemain 2, 3, atau 4
         const isReadyToStart = gameData.players.length >= 2;
         const isHost = currentPlayerId === 'host' || localStorage.getItem(`tanggapoly_is_creator_${gameData.id}`) === 'true';
 
         return (
             <div className="bg-[#2a3038] p-8 rounded-3xl shadow-2xl w-full max-w-md mx-auto mt-12 text-center animate-fade-in border border-gray-700 relative z-20">
-                <button onClick={handleQuitLobby} className="absolute top-4 right-4 text-gray-500 hover:text-red-400 p-2 transition-colors" title="Batalkan Lobi">
+                {/* FIX: Tombol X sekarang manggil promptQuitLobby, bukan bawaan windows */}
+                <button onClick={promptQuitLobby} className="absolute top-4 right-4 text-gray-500 hover:text-red-400 p-2 transition-colors" title="Batalkan Lobi">
                     <CloseIcon />
                 </button>
 
@@ -218,7 +226,6 @@ function Lobby() {
                 <div className="text-left space-y-3 bg-[#1e2329]/50 p-5 rounded-2xl">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-black text-gray-300 uppercase text-sm tracking-widest">Pemain Bergabung</h3>
-                        {/* Tampilan berubah: Nunjukin kalo batasnya 4, tapi gak harus nunggu penuh */}
                         <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-extrabold">{gameData.players.length} / 4 Maks</span>
                     </div>
                     {gameData.players.map(p => (
@@ -235,7 +242,6 @@ function Lobby() {
                 </div>
 
                 <div className="mt-8">
-                    {/* Tampilan Tombol Mulai Diubah Biar Fleksibel */}
                     {isHost ? (
                         <button onClick={handleStartGame} disabled={!isReadyToStart || loading} className={`w-full py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 ${isReadyToStart ? 'bg-emerald-500 hover:bg-emerald-400 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
                             {loading ? 'M E M P R O S E S...' : (isReadyToStart ? 'M U L A I   G A M E' : `BUTUH ${2 - gameData.players.length} ORANG LAGI...`)}
@@ -446,6 +452,23 @@ function Lobby() {
                         >
                             Saya Mengerti!
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* FIX: MODAL CUSTOM UNTUK KELUAR DARI LOBI */}
+            {showExitModal && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+                    <div className="bg-[#2a3038] w-full max-w-md rounded-[2rem] border-4 border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.15)] p-8 text-center flex flex-col items-center">
+                        <div className="bg-yellow-500/10 p-4 rounded-full mb-6">
+                            <WarningIcon />
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Yakin mau membatalkan?</h2>
+                        <p className="text-gray-400 font-bold mb-8 text-sm">Lobi ini akan ditutup dan semua temanmu akan dikeluarkan.</p>
+                        <div className="flex w-full gap-4">
+                            <button onClick={() => setShowExitModal(false)} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-black text-lg rounded-xl transition-all">Batal</button>
+                            <button onClick={executeQuitLobby} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">Ya, Keluar</button>
+                        </div>
                     </div>
                 </div>
             )}
