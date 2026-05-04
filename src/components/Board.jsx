@@ -44,18 +44,12 @@ const generateBoard = () => {
 // FIX: JURUS ACAK HURUF UNIK PER PEMAIN
 const getShuffledIndices = (text, attempts, playerId) => {
     if (!text || attempts === 0) return [];
-
-    // 1. Ambil semua index (0, 1, 2, dst)
     let indices = Array.from({ length: text.length }, (_, i) => i);
-
-    // 2. Acak index-nya pake rumus "Seeding" berdasarkan Player ID
     for (let i = indices.length - 1; i > 0; i--) {
         const seed = playerId * (i + 1) * (text.charCodeAt(0) || 1);
         const j = Math.floor((seed % 100) / 100 * (i + 1));
         [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-
-    // 3. Ambil sebanyak jumlah kesalahan (failedAttempts)
     return indices.slice(0, attempts);
 };
 
@@ -64,13 +58,9 @@ const Board = ({
     activeQuestion, quizAnswer, setQuizAnswer, submitQuiz, answerFeedback, isMyTurn, activePlayerName
 }) => {
     const boardData = generateBoard();
-
-    // Ambil info failedAttempts dan ID pemain yang lagi dapet giliran
     const currentPlayer = players?.[turn];
     const currentFailedAttempts = currentPlayer?.failedAttempts || 0;
     const currentPlayerId = currentPlayer?.id || 1;
-
-    // Panggil fungsi acak clue di sini
     const revealedIndices = activeQuestion ? getShuffledIndices(activeQuestion.jawaban, currentFailedAttempts, currentPlayerId) : [];
 
     // PLAYER CARD
@@ -80,18 +70,18 @@ const Board = ({
         const displayName = p?.name || `Player ${id}`;
 
         return (
-            <div className={`${colorClass} rounded-2xl p-1.5 border-2 ${isActive ? 'border-white ring-4 ring-yellow-400 scale-105 shadow-2xl z-20' : 'border-black/20 z-0'} transition-all duration-300 h-[105px] flex flex-row items-center justify-center gap-1.5 overflow-hidden`}>
-                <img src={getPionAsset(id)} alt={`Pion ${id}`} className={`w-9 h-11 object-contain drop-shadow-md flex-none ${isActive && !rolling ? 'animate-bounce' : ''}`} />
+            <div className={`${colorClass} rounded-2xl 2xl:rounded-[2rem] p-1.5 2xl:p-4 border-2 2xl:border-4 ${isActive ? 'border-white ring-4 2xl:ring-8 ring-yellow-400 scale-105 shadow-2xl z-20' : 'border-black/20 z-0'} transition-all duration-300 h-[105px] 2xl:h-[180px] flex flex-row items-center justify-center gap-1.5 2xl:gap-4 overflow-hidden`}>
+                <img src={getPionAsset(id)} alt={`Pion ${id}`} className={`w-9 h-11 2xl:w-16 2xl:h-20 object-contain drop-shadow-md flex-none ${isActive && !rolling ? 'animate-bounce' : ''}`} />
                 <div className="flex flex-col items-center min-w-0 flex-1">
                     <span
-                        className={`text-[10px] font-black uppercase mb-1 drop-shadow-md truncate w-full text-center px-0.5 ${textColor || 'text-white'}`}
+                        className={`text-[10px] 2xl:text-xl font-black uppercase mb-1 2xl:mb-3 drop-shadow-md truncate w-full text-center px-0.5 ${textColor || 'text-white'}`}
                         title={displayName}
                     >
                         {displayName}
                     </span>
-                    <div className="bg-white border-2 border-gray-800 rounded-lg px-2.5 py-0.5 flex flex-col items-center shadow-inner min-w-[48px] flex-none">
-                        <span className="text-[8px] font-bold text-gray-800 leading-none">Kotak</span>
-                        <span className="text-xl font-black text-black leading-none mt-0.5">{p?.position || 0}</span>
+                    <div className="bg-white border-2 2xl:border-4 border-gray-800 rounded-lg 2xl:rounded-2xl px-2.5 py-0.5 2xl:px-6 2xl:py-2 flex flex-col items-center shadow-inner min-w-[48px] 2xl:min-w-[100px] flex-none">
+                        <span className="text-[8px] 2xl:text-sm font-bold text-gray-800 leading-none">Kotak</span>
+                        <span className="text-xl 2xl:text-4xl font-black text-black leading-none mt-0.5 2xl:mt-2">{p?.position || 0}</span>
                     </div>
                 </div>
             </div>
@@ -99,28 +89,30 @@ const Board = ({
     };
 
     return (
-        <div className="w-full h-screen max-h-[768px] mx-auto p-2 flex flex-col lg:flex-row gap-3 items-center justify-center overflow-hidden bg-transparent">
+        // 1. WRAPPER UTAMA: Tinggi digas sampe 96vh di laptop, max-w dilonggarin, padding ditipisin biar mentok atas-bawah
+        <div className="w-full max-w-[1920px] mx-auto min-h-[100dvh] lg:min-h-0 lg:h-[96vh] p-2 lg:p-2 2xl:p-6 flex flex-col lg:flex-row gap-3 lg:gap-4 2xl:gap-8 items-center lg:items-stretch justify-start lg:justify-center overflow-y-auto lg:overflow-hidden bg-transparent">
 
-            {/* AREA UTAMA BOARD (KIRI) */}
-            <div className="flex-none w-full max-w-[700px] h-full max-h-[620px] relative bg-[#4B2C85] p-3 rounded-[2rem] border-8 border-[#D32F2F] shadow-2xl overflow-hidden flex items-center justify-center">
+            {/* AREA UTAMA BOARD (KIRI): Patokan h-full dari 96vh, otomatis membesar maksimal sesuai layar */}
+            <div className="w-full lg:w-auto h-auto lg:h-full aspect-[6/5] relative bg-[#4B2C85] p-2 md:p-3 2xl:p-8 rounded-[2rem] 2xl:rounded-[4rem] border-8 2xl:border-[16px] border-[#D32F2F] shadow-2xl flex-none overflow-hidden flex items-center justify-center mt-4 lg:mt-0">
+
                 <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
 
-                <div className="relative grid grid-cols-6 gap-0 bg-white border-4 border-orange-400 aspect-[6/5] w-full z-0">
+                {/* GRID BOARD */}
+                <div className="relative grid grid-cols-6 grid-rows-5 gap-0 bg-white border-4 2xl:border-8 border-orange-400 w-full h-full z-0">
                     {boardData.map((row) => row.map((cell) => (
-                        <div key={cell.id} className="aspect-square border border-orange-100 flex flex-col justify-start p-0.5 relative bg-white overflow-hidden">
+                        <div key={cell.id} className="border border-orange-100 flex flex-col justify-start p-0.5 2xl:p-2 relative bg-white overflow-hidden">
 
-                            <span className={`absolute top-1 right-1.5 font-black leading-none z-10 text-right ${
-                                cell.label === "START" || cell.label === "FINISH"
-                                ? "text-slate-800 text-[10px] sm:text-xs tracking-tighter"
-                                : "text-gray-300 text-[9px] sm:text-[11px]"
-                            }`}>
+                            <span className={`absolute top-1 right-1.5 font-black leading-none z-10 text-right ${cell.label === "START" || cell.label === "FINISH"
+                                    ? "text-slate-800 text-[10px] sm:text-xs 2xl:text-2xl tracking-tighter"
+                                    : "text-gray-300 text-[9px] sm:text-[11px] 2xl:text-xl"
+                                }`}>
                                 {cell.label}
                             </span>
 
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-2 z-30">
                                 <div className="flex flex-wrap gap-0 justify-center items-center">
                                     {players?.filter(p => p.position === cell.id).map((p) => (
-                                        <img key={p.id} src={getPionAsset(p.id)} className="w-6 h-6 sm:w-8 h-8 object-contain drop-shadow-md animate-bounce" />
+                                        <img key={p.id} src={getPionAsset(p.id)} className="w-6 h-6 sm:w-8 sm:h-8 2xl:w-20 2xl:h-20 object-contain drop-shadow-md animate-bounce" />
                                     ))}
                                 </div>
                             </div>
@@ -138,43 +130,33 @@ const Board = ({
 
                 {/* MODAL QUIZ */}
                 {phase === "quiz" && activeQuestion && (
-                    <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in rounded-[1.5rem]">
-                        <div className="bg-[#FFF9EB] w-full max-w-[320px] rounded-[2rem] border-[6px] border-[#5D4037] shadow-2xl p-4 flex flex-col items-center gap-2 relative scale-95">
-                            <h2 className="text-lg font-black text-[#5D4037] uppercase tracking-tighter">SOAL KOTAK NO {players[turn]?.position + 1}</h2>
+                    <div className="fixed lg:absolute inset-0 z-[100] flex items-center justify-center p-2 lg:p-4 bg-black/80 lg:bg-black/60 lg:backdrop-blur-sm animate-fade-in">
+                        <div className="bg-[#FFF9EB] w-full max-w-[320px] lg:max-w-[400px] 2xl:max-w-[500px] max-h-[95%] overflow-y-auto rounded-[2rem] 2xl:rounded-[3rem] border-[6px] 2xl:border-[10px] border-[#5D4037] shadow-2xl p-4 lg:p-4 2xl:p-8 flex flex-col items-center gap-2 lg:gap-2 2xl:gap-4 relative">
+                            <h2 className="text-lg lg:text-xl 2xl:text-3xl font-black text-[#5D4037] uppercase tracking-tighter flex-none">
+                                SOAL KOTAK NO {players[turn]?.position + 1}
+                            </h2>
 
                             {activeQuestion.gambar && (
-                                <div className="bg-white rounded-xl p-4 shadow-inner border border-[#5D4037]/10 w-full flex justify-center h-[120px]">
-                                    <img
-                                        src={activeQuestion.gambar}
-                                        alt="Gambar Soal"
-                                        className="w-full h-full object-contain drop-shadow-md animate-fade-in"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.style.display = 'none';
-                                        }}
-                                    />
+                                <div className="bg-white rounded-xl 2xl:rounded-2xl p-2 shadow-inner border border-[#5D4037]/10 w-full flex justify-center h-[120px] lg:h-[100px] 2xl:h-[200px] flex-none">
+                                    <img src={activeQuestion.gambar} alt="Gambar Soal" className="w-full h-full object-contain drop-shadow-md animate-fade-in" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
                                 </div>
                             )}
 
-                            <div className="text-center mt-2 w-full px-2">
-                                <h3 className="text-xl md:text-2xl font-black text-[#2E7D32] leading-tight break-words">
+                            <div className="text-center mt-1 w-full px-2 flex-none">
+                                <h3 className="text-xl lg:text-xl 2xl:text-4xl font-black text-[#2E7D32] leading-tight break-words">
                                     {activeQuestion.soal}
                                 </h3>
                             </div>
 
-                            {/* TAMPILAN CLUE RANDOM (Sesuai Player ID) */}
                             {currentFailedAttempts > 0 && isMyTurn && (
-                                <div className="w-full flex flex-col items-center mt-1 animate-fade-in">
-                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Bantuan Huruf Acak:</span>
+                                <div className="w-full flex flex-col items-center mt-1 animate-fade-in flex-none">
+                                    <span className="text-[10px] lg:text-xs 2xl:text-lg font-black text-orange-500 uppercase tracking-widest mb-1">Bantuan Huruf Acak:</span>
                                     <div className="flex flex-wrap gap-1 justify-center">
                                         {activeQuestion.jawaban.split('').map((char, index) => {
-                                            if (char === ' ') return <span key={index} className="w-3"></span>;
-
-                                            // Cek apakah index ini termasuk di daftar clue yang udah kebuka buat pemain ini
+                                            if (char === ' ') return <span key={index} className="w-3 lg:w-4"></span>;
                                             const isRevealed = revealedIndices.includes(index);
-
                                             return (
-                                                <span key={index} className="text-lg md:text-xl font-black text-orange-700 bg-orange-100 px-2 py-1 rounded-md border-2 border-orange-300 shadow-sm min-w-[28px] text-center">
+                                                <span key={index} className="text-lg lg:text-xl 2xl:text-3xl font-black text-orange-700 bg-orange-100 px-2 py-1 lg:px-2 lg:py-1 2xl:px-4 2xl:py-2 rounded-md lg:rounded-lg border-2 lg:border-4 border-orange-300 shadow-sm min-w-[28px] lg:min-w-[32px] 2xl:min-w-[50px] text-center">
                                                     {isRevealed ? char.toUpperCase() : '?'}
                                                 </span>
                                             );
@@ -183,27 +165,20 @@ const Board = ({
                                 </div>
                             )}
 
-                            <div className="w-full flex flex-col gap-2 mt-2">
+                            <div className="w-full flex flex-col gap-2 mt-1 lg:mt-2 flex-none">
                                 {isMyTurn ? (
                                     <>
-                                        <input
-                                            type="text"
-                                            placeholder="Ketik jawabanmu..."
-                                            className="w-full text-center text-md font-black border-2 border-[#5D4037]/20 rounded-lg py-2 bg-white text-slate-800 outline-none focus:border-red-500 transition-all shadow-inner uppercase"
-                                            value={quizAnswer}
-                                            onChange={(e) => setQuizAnswer(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && submitQuiz()}
-                                        />
-                                        <button onClick={submitQuiz} className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">KIRIM</button>
+                                        <input type="text" placeholder="Ketik jawabanmu..." className="w-full text-center text-md lg:text-base 2xl:text-2xl font-black border-2 lg:border-4 border-[#5D4037]/20 rounded-lg lg:rounded-xl py-2 lg:py-2 2xl:py-4 bg-white text-slate-800 outline-none focus:border-red-500 transition-all shadow-inner uppercase" value={quizAnswer} onChange={(e) => setQuizAnswer(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitQuiz()} />
+                                        <button onClick={submitQuiz} className="w-full py-2.5 lg:py-2.5 2xl:py-4 bg-red-600 hover:bg-red-700 text-white font-black text-lg lg:text-lg 2xl:text-3xl rounded-xl lg:rounded-xl shadow-[0_4px_0_rgb(153,27,27)] lg:shadow-[0_4px_0_rgb(153,27,27)] 2xl:shadow-[0_8px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">KIRIM</button>
                                     </>
                                 ) : (
-                                    <p className="text-slate-500 font-bold text-[10px] text-center italic py-2 leading-tight">Giliran {activePlayerName} menjawab...</p>
+                                    <p className="text-slate-500 font-bold text-[10px] lg:text-xs 2xl:text-lg text-center italic py-2 leading-tight">Giliran {activePlayerName} menjawab...</p>
                                 )}
                             </div>
 
-                            <div className="h-4 flex items-center justify-center">
-                                {answerFeedback === "correct" && <p className="text-emerald-600 font-black text-[12px]">✅ Jawaban Anda Benar</p>}
-                                {answerFeedback === "wrong" && <p className="text-red-600 font-black text-[12px]">❌ Jawaban Anda Salah</p>}
+                            <div className="h-4 lg:h-5 2xl:h-8 flex items-center justify-center mt-1 flex-none">
+                                {answerFeedback === "correct" && <p className="text-emerald-600 font-black text-[12px] lg:text-xs 2xl:text-xl">✅ Jawaban Anda Benar</p>}
+                                {answerFeedback === "wrong" && <p className="text-red-600 font-black text-[12px] lg:text-xs 2xl:text-xl">❌ Jawaban Anda Salah</p>}
                             </div>
                         </div>
                     </div>
@@ -211,49 +186,40 @@ const Board = ({
             </div>
 
             {/* PANEL SAKTI KANAN */}
-            <div className="flex-none w-full max-w-[280px] lg:h-full lg:max-h-[700px] flex flex-col gap-3 bg-[#D32F2F] p-3 rounded-[1.5rem] border-4 border-yellow-400 shadow-2xl self-center overflow-hidden">
-
-                {/* FIX: TAMPILAN DINAMIS PEMAIN 1 & 2 */}
+            <div className="w-full max-w-[350px] lg:w-[320px] 2xl:max-w-none 2xl:w-[25vw] flex-none h-auto lg:h-full flex flex-col gap-3 2xl:gap-8 bg-[#D32F2F] p-3 2xl:p-8 rounded-[1.5rem] 2xl:rounded-[3rem] border-4 2xl:border-8 border-yellow-400 shadow-2xl overflow-hidden mb-8 lg:mb-0">
                 {players?.some(p => p.id === 1) || players?.some(p => p.id === 2) ? (
-                    <div className="grid grid-cols-2 gap-2 flex-none">
+                    <div className="grid grid-cols-2 gap-2 2xl:gap-4 flex-none">
                         {players?.some(p => p.id === 1) && <PlayerCard id={1} colorClass="bg-[#E53935]" />}
                         {players?.some(p => p.id === 2) && <PlayerCard id={2} colorClass="bg-[#1E88E5]" />}
                     </div>
                 ) : null}
 
-                <div className="flex-1 bg-white rounded-xl p-2 flex flex-col items-center justify-center gap-2 border-4 border-gray-200 shadow-inner overflow-hidden">
+                <div className="flex-1 bg-white rounded-xl 2xl:rounded-3xl p-2 2xl:p-8 flex flex-col items-center justify-center gap-2 2xl:gap-8 border-4 2xl:border-8 border-gray-200 shadow-inner overflow-hidden">
                     <div className="text-center">
-                        <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none">Giliran</p>
-                        <p className="text-2xl font-black text-red-600 uppercase mt-0.5">{activePlayerName || `P${turn + 1}`}</p>
+                        <p className="text-[12px] 2xl:text-2xl font-black text-slate-400 uppercase tracking-widest leading-none">Giliran</p>
+                        <p className="text-2xl 2xl:text-6xl font-black text-red-600 uppercase mt-0.5 2xl:mt-4">{activePlayerName || `P${turn + 1}`}</p>
                     </div>
 
-                    <div className="bg-gray-50 p-3 rounded-3xl border-2 border-gray-100 shadow-md relative">
-                        <img src={getDiceAsset(diceRoll[0])} alt="Dice" className={`w-24 h-24 object-contain drop-shadow-md ${spinning ? 'animate-spin' : ''}`} />
+                    <div className="bg-gray-50 p-3 2xl:p-10 rounded-3xl 2xl:rounded-[3rem] border-2 2xl:border-4 border-gray-100 shadow-md relative">
+                        <img src={getDiceAsset(diceRoll[0])} alt="Dice" className={`w-24 h-24 2xl:w-56 2xl:h-56 object-contain drop-shadow-md ${spinning ? 'animate-spin' : ''}`} />
                     </div>
 
-                    <button
-                        onClick={onRoll}
-                        disabled={rolling || phase !== 'dice' || !isMyTurn}
-                        className={`w-full py-3 rounded-2xl font-black text-xl tracking-widest shadow-[0_5px_0_rgb(185,28,28)] transition-all active:translate-y-1 active:shadow-none ${rolling || phase !== 'dice' || !isMyTurn
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                                : 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
-                            }`}
-                    >
-                        {rolling ? 'M E L E M P A R...' : 'L E M P A R'}
-                    </button>
-                    <p className="text-[10px] font-bold text-gray-400 italic text-center leading-tight">
-                        {phase === 'dice' ? "Klik untuk melempar dadunya!" : "Tunggu kuis selesai..."}
-                    </p>
+                    <div className="w-full mt-2 2xl:mt-6">
+                        <button onClick={onRoll} disabled={rolling || phase !== 'dice' || !isMyTurn} className={`w-full py-3 2xl:py-8 rounded-2xl 2xl:rounded-[2rem] font-black text-xl 2xl:text-4xl tracking-widest shadow-[0_5px_0_rgb(185,28,28)] 2xl:shadow-[0_10px_0_rgb(185,28,28)] transition-all active:translate-y-1 active:shadow-none ${rolling || phase !== 'dice' || !isMyTurn ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' : 'bg-red-600 hover:bg-red-700 text-white animate-pulse'}`}>
+                            {rolling ? 'M E L E M P A R...' : 'L E M P A R'}
+                        </button>
+                        <p className="text-[10px] 2xl:text-xl font-bold text-gray-400 italic text-center leading-tight mt-2 2xl:mt-4">
+                            {phase === 'dice' ? "Klik untuk melempar dadunya!" : "Tunggu kuis selesai..."}
+                        </p>
+                    </div>
                 </div>
 
-                {/* FIX: TAMPILAN DINAMIS PEMAIN 3 & 4 */}
                 {players?.some(p => p.id === 3) || players?.some(p => p.id === 4) ? (
-                    <div className="grid grid-cols-2 gap-2 flex-none">
+                    <div className="grid grid-cols-2 gap-2 2xl:gap-4 flex-none">
                         {players?.some(p => p.id === 3) && <PlayerCard id={3} colorClass="bg-[#43A047]" />}
                         {players?.some(p => p.id === 4) && <PlayerCard id={4} colorClass="bg-[#FDD835]" />}
                     </div>
                 ) : null}
-
             </div>
         </div>
     );
