@@ -54,7 +54,7 @@ const getShuffledIndices = (text, attempts, playerId) => {
 
 const Board = ({
     players, turn, diceRoll = [1], rolling = false, spinning = false, phase, onRoll,
-    activeQuestion, quizAnswer, setQuizAnswer, submitQuiz, answerFeedback, isMyTurn, activePlayerName, timeLeft
+    activeQuestion, quizAnswer, handleAnswerChange, submitQuiz, answerFeedback, isMyTurn, isHost, liveAnswer, activePlayerName, timeLeft
 }) => {
     const boardData = generateBoard();
     const currentPlayer = players?.[turn];
@@ -113,7 +113,8 @@ const Board = ({
                     <div className="absolute pointer-events-none z-10" style={{ bottom: '2%', left: '32%', width: '38%', height: '36%', transform: 'rotate(40deg)' }}><img src={gambarUlar} className="w-full h-full object-contain" /></div>
                 </div>
 
-                {phase === "quiz" && activeQuestion && isMyTurn && (
+                {/* MODAL QUIZ: Muncul cuma buat Active Player ATAU Guru/Host */}
+                {phase === "quiz" && activeQuestion && (isMyTurn || isHost) && (
                     <div className="fixed lg:absolute inset-0 z-[100] flex items-center justify-center p-2 lg:p-4 bg-black/80 lg:bg-black/60 lg:backdrop-blur-sm animate-fade-in">
                         <div className="bg-[#FFF9EB] w-full max-w-[320px] lg:max-w-[400px] 2xl:max-w-[500px] max-h-[95%] overflow-y-auto rounded-[2rem] 2xl:rounded-[3rem] border-[6px] 2xl:border-[10px] border-[#5D4037] shadow-2xl p-4 lg:p-4 2xl:p-8 flex flex-col items-center gap-2 lg:gap-2 2xl:gap-4 relative">
                             <h2 className="text-lg lg:text-xl 2xl:text-3xl font-black text-[#5D4037] uppercase tracking-tighter flex-none">
@@ -132,7 +133,7 @@ const Board = ({
                                 </h3>
                             </div>
 
-                            {currentFailedAttempts > 0 && isMyTurn && (
+                            {currentFailedAttempts > 0 && (
                                 <div className="w-full flex flex-col items-center mt-1 animate-fade-in flex-none">
                                     <span className="text-[10px] lg:text-xs 2xl:text-lg font-black text-orange-500 uppercase tracking-widest mb-1">Bantuan Huruf Acak:</span>
                                     <div className="flex flex-wrap gap-1 justify-center">
@@ -149,15 +150,22 @@ const Board = ({
                                 </div>
                             )}
 
+                            {/* LOGIKA PERBEDAAN TAMPILAN MURID VS GURU */}
                             <div className="w-full flex flex-col gap-2 mt-1 lg:mt-2 flex-none">
                                 {isMyTurn ? (
                                     <>
-                                        <input type="text" placeholder="Ketik jawabanmu..." className="w-full text-center text-md lg:text-base 2xl:text-2xl font-black border-2 lg:border-4 border-[#5D4037]/20 rounded-lg lg:rounded-xl py-2 lg:py-2 2xl:py-4 bg-white text-slate-800 outline-none focus:border-red-500 transition-all shadow-inner uppercase" value={quizAnswer} onChange={(e) => setQuizAnswer(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitQuiz()} />
+                                        <input type="text" placeholder="Ketik jawabanmu..." className="w-full text-center text-md lg:text-base 2xl:text-2xl font-black border-2 lg:border-4 border-[#5D4037]/20 rounded-lg lg:rounded-xl py-2 lg:py-2 2xl:py-4 bg-white text-slate-800 outline-none focus:border-red-500 transition-all shadow-inner uppercase" value={quizAnswer} onChange={(e) => handleAnswerChange(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitQuiz()} />
                                         <button onClick={submitQuiz} className="w-full py-2.5 lg:py-2.5 2xl:py-4 bg-red-600 hover:bg-red-700 text-white font-black text-lg lg:text-lg 2xl:text-3xl rounded-xl lg:rounded-xl shadow-[0_4px_0_rgb(153,27,27)] lg:shadow-[0_4px_0_rgb(153,27,27)] 2xl:shadow-[0_8px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">KIRIM</button>
                                     </>
-                                ) : (
-                                    <p className="text-slate-500 font-bold text-[10px] lg:text-xs 2xl:text-lg text-center italic py-2 leading-tight">Giliran {activePlayerName} menjawab...</p>
-                                )}
+                                ) : isHost ? (
+                                    <>
+                                        {/* TAMPILAN KHUSUS GURU: Box Biru Transparan nampilin tulisan murid secara live */}
+                                        <div className="w-full text-center text-md lg:text-base 2xl:text-2xl font-black border-2 lg:border-4 border-blue-500/50 rounded-lg lg:rounded-xl py-2 lg:py-2 2xl:py-4 bg-blue-50 text-blue-900 shadow-inner uppercase min-h-[44px] 2xl:min-h-[72px] flex items-center justify-center break-words px-2">
+                                            {liveAnswer || <span className="text-blue-300">Jawaban murid...</span>}
+                                        </div>
+                                        <p className="text-blue-600 font-bold text-[10px] lg:text-xs 2xl:text-lg text-center italic mt-1 leading-tight"> MODE PENGAWAS</p>
+                                    </>
+                                ) : null}
                             </div>
 
                             <div className="h-4 lg:h-5 2xl:h-8 flex items-center justify-center mt-1 flex-none">

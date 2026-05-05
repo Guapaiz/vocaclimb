@@ -53,6 +53,7 @@ function Game() {
     const [visualPlayers, setVisualPlayers] = useState(null);
 
     const [quizAnswer, setQuizAnswer] = useState("");
+    const [liveAnswer, setLiveAnswer] = useState(""); // State buat nampung ketikan live di layar guru
     const [answerFeedback, setAnswerFeedback] = useState(null);
     const [timeLeft, setTimeLeft] = useState(30);
 
@@ -113,7 +114,11 @@ function Game() {
 
         fetchInitialGame();
 
-        const channel = supabase.channel(`game-room-${gameId}`);
+        // FIX: Konfigurasi Supabase buat nangkap fitur Broadcast (CCTV Guru)
+        const channel = supabase.channel(`game-room-${gameId}`, {
+            config: { broadcast: { ack: false } }
+        });
+
         channel.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
             (payload) => {
                 if (payload.new.phase === 'cancelled') {
@@ -122,7 +127,14 @@ function Game() {
                 }
                 setGameState(payload.new);
             }
-        ).subscribe();
+        )
+        .on('broadcast', { event: 'typing' }, (payload) => {
+            // Kalau yang buka adalah guru/host, update tampilan layar dengan ketikan murid
+            if (localStorage.getItem(`tanggapoly_player_id_${gameId}`) === 'host') {
+                setLiveAnswer(payload.payload.text);
+            }
+        })
+        .subscribe();
 
         return () => { supabase.removeChannel(channel); };
     }, [gameId, navigate]);
@@ -142,10 +154,12 @@ function Game() {
     useEffect(() => {
         setTimeLeft(30);
         setQuizAnswer("");
+        setLiveAnswer(""); // Reset juga jawaban di layar guru
         setAnswerFeedback(null);
     }, [gameState?.turn]);
 
     const isMyTurnCheck = gameState ? (gameState.turn + 1) === localPlayerId : false;
+    const isHost = localPlayerId === 'host';
 
     // LOGIKA COUNTDOWN YANG LEBIH STABIL
     useEffect(() => {
@@ -184,7 +198,7 @@ function Game() {
             stopSound('wrong');
             await supabase.from('games').update({
                 turn: nextTurn,
-                phase: 'quiz', // <-- KUNCI PHASE TETAP QUIZ
+                phase: 'quiz',
                 players: newPlayers
             }).eq('id', gameId);
         }, 1500);
@@ -283,6 +297,17 @@ function Game() {
         setRolling(false);
     };
 
+    // FUNGSI BARU: Nangkep ketikan murid dan broadcast ke guru secara gaib
+    const handleAnswerChange = (text) => {
+        setQuizAnswer(text);
+        // Kirim event 'typing' langsung ke channel tanpa nyentuh database
+        supabase.channel(`game-room-${gameId}`).send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { text: text }
+        });
+    };
+
     const submitQuiz = async () => {
         if (!gameState || gameState.phase !== 'quiz') return;
         const { turn, players } = gameState;
@@ -316,7 +341,7 @@ function Game() {
 
                 await supabase.from('games').update({
                     turn: nextTurn,
-                    phase: 'quiz', // <-- KUNCI PHASE TETAP QUIZ
+                    phase: 'quiz',
                     players: newPlayers
                 }).eq('id', gameId);
             }, 1500);
@@ -466,10 +491,12 @@ function Game() {
                     onRoll={rollDice}
                     activeQuestion={activeQuestion}
                     quizAnswer={quizAnswer}
-                    setQuizAnswer={setQuizAnswer}
+                    handleAnswerChange={handleAnswerChange} // Props baru buat nangkep ketikan murid
                     submitQuiz={submitQuiz}
                     answerFeedback={answerFeedback}
                     isMyTurn={isMyTurn}
+                    isHost={isHost} // Ngasih tau board kalau yang buka ini guru
+                    liveAnswer={liveAnswer} // Prop buat nampilin ketikan
                     activePlayerName={activePlayerName}
                     timeLeft={timeLeft}
                 />
