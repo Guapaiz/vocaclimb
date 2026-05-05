@@ -54,6 +54,7 @@ function Game() {
 
     const [quizAnswer, setQuizAnswer] = useState("");
     const [answerFeedback, setAnswerFeedback] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(30);
 
     const [bankSoal, setBankSoal] = useState([]);
 
@@ -68,9 +69,7 @@ function Game() {
             currentLocation.pathname !== nextLocation.pathname
     );
 
-    const promptForceExit = () => {
-        setShowConfirmExitModal(true);
-    };
+    const promptForceExit = () => setShowConfirmExitModal(true);
 
     const executeForceExit = async () => {
         setShowConfirmExitModal(false);
@@ -82,12 +81,9 @@ function Game() {
 
     const getQuestionForPosition = (position) => {
         if (!bankSoal || bankSoal.length === 0) return null;
-
         const validSquares = [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28];
-
         let index = validSquares.indexOf(position);
         if (index === -1) index = 0;
-
         return bankSoal[index % bankSoal.length];
     };
 
@@ -99,7 +95,6 @@ function Game() {
 
         const fetchInitialGame = async () => {
             setLoading(true);
-
             const { data: gameData, error: gameError } = await supabase.from('games').select('*').eq('id', gameId).single();
             if (gameError || !gameData || gameData.finished) {
                 localStorage.removeItem(`tanggapoly_player_id_${gameId}`);
@@ -107,17 +102,12 @@ function Game() {
                 return;
             }
 
-            const { data: soalData, error: soalError } = await supabase.from('bank_soal').select('*').order('id', { ascending: true });
-            if (soalError) {
-                console.error("Gagal narik bank soal:", soalError);
-            } else {
-                setBankSoal(soalData || []);
-            }
+            const { data: soalData } = await supabase.from('bank_soal').select('*').order('id', { ascending: true });
+            setBankSoal(soalData || []);
 
             setGameState(gameData);
             setVisualDice(gameData.diceRoll || [1]);
             setVisualPlayers(gameData.players);
-
             setLoading(false);
         };
 
@@ -130,12 +120,7 @@ function Game() {
                     setShowCancelModal(true);
                     return;
                 }
-
                 setGameState(payload.new);
-                if (payload.new.turn !== gameState?.turn) {
-                    setQuizAnswer("");
-                    setAnswerFeedback(null);
-                }
             }
         ).subscribe();
 
@@ -143,7 +128,7 @@ function Game() {
     }, [gameId, navigate]);
 
     useEffect(() => {
-        if (gameState && !rolling) { setVisualPlayers(gameState.players); }
+        if (gameState && !rolling) setVisualPlayers(gameState.players);
     }, [gameState?.players]);
 
     useEffect(() => {
@@ -153,11 +138,62 @@ function Game() {
         }
     }, [gameState?.phase, hasPlayedStartSound]);
 
+    // JURUS AUTO-RESET TIAP GANTI GILIRAN
+    useEffect(() => {
+        setTimeLeft(30);
+        setQuizAnswer("");
+        setAnswerFeedback(null);
+    }, [gameState?.turn]);
+
+    const isMyTurnCheck = gameState ? (gameState.turn + 1) === localPlayerId : false;
+
+    // LOGIKA COUNTDOWN YANG LEBIH STABIL
+    useEffect(() => {
+        let timer;
+        if (gameState?.phase === 'quiz' && !answerFeedback) {
+            timer = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        if (isMyTurnCheck) executeTimeUp();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else if (gameState?.phase !== 'quiz') {
+            setTimeLeft(30);
+        }
+        return () => clearInterval(timer);
+    }, [gameState?.phase, answerFeedback, isMyTurnCheck]);
+
+    const executeTimeUp = async () => {
+        playSound('wrong');
+        setAnswerFeedback("timeout");
+
+        const { data: latestGame } = await supabase.from('games').select('*').eq('id', gameId).single();
+        if(!latestGame) return;
+
+        const { turn, players } = latestGame;
+        const currentFailedAttempts = players[turn].failedAttempts || 0;
+
+        const newPlayers = players.map(p => p.id === players[turn].id ? { ...p, failedAttempts: currentFailedAttempts + 1 } : p);
+        const nextTurn = (turn + 1) % players.length;
+
+        setTimeout(async () => {
+            stopSound('wrong');
+            await supabase.from('games').update({
+                turn: nextTurn,
+                phase: 'quiz', // <-- KUNCI PHASE TETAP QUIZ
+                players: newPlayers
+            }).eq('id', gameId);
+        }, 1500);
+    };
+
     useEffect(() => {
         if (gameState?.is_rolling && !rolling) {
             setRolling(true);
             setSpinning(true);
-
             playSound('roll');
 
             const animationInterval = setInterval(() => {
@@ -168,7 +204,6 @@ function Game() {
                 clearInterval(animationInterval);
                 setVisualDice(gameState.diceRoll);
                 setSpinning(false);
-
                 stopSound('roll');
 
                 setTimeout(() => {
@@ -194,17 +229,12 @@ function Game() {
                     const stepInterval = setInterval(() => {
                         const currentStep = path[stepIndex];
                         setVisualPlayers(prev => prev.map(p => p.id === currentPlayer.id ? { ...p, position: currentStep } : p));
-
                         playSound('step');
-
                         stepIndex++;
 
                         if (stepIndex >= path.length) {
                             clearInterval(stepInterval);
-
-                            setTimeout(() => {
-                                stopSound('step');
-                            }, 300);
+                            setTimeout(() => stopSound('step'), 300);
 
                             const finalPos = specialMoves[newPos] || newPos;
 
@@ -212,7 +242,6 @@ function Game() {
                                 setTimeout(() => {
                                     const jumpType = finalPos > newPos ? 'ladder' : 'snake';
                                     playSound(jumpType);
-
                                     setVisualPlayers(prev => prev.map(p => p.id === currentPlayer.id ? { ...p, position: finalPos } : p));
 
                                     setTimeout(() => {
@@ -238,12 +267,9 @@ function Game() {
         const { turn, players } = gameState;
         const isFinished = finalPos >= TARGET_FINISH;
 
-        if (isFinished) {
-            playSound('win');
-        }
+        if (isFinished) playSound('win');
 
         const newPlayers = players.map(p => p.id === players[turn].id ? { ...p, position: finalPos, score: p.score + 10 } : p);
-
         const nextTurn = (turn + 1) % players.length;
 
         await supabase.from('games').update({
@@ -265,7 +291,6 @@ function Game() {
         if (!activeQuestion) return;
 
         const currentFailedAttempts = players[turn].failedAttempts || 0;
-
         const isCorrect = quizAnswer.trim().toLowerCase() === activeQuestion.jawaban.toLowerCase() || currentFailedAttempts >= activeQuestion.jawaban.length;
 
         if (isCorrect) {
@@ -279,9 +304,6 @@ function Game() {
                     phase: 'dice',
                     players: newPlayers
                 }).eq('id', gameId);
-
-                setAnswerFeedback(null);
-                setQuizAnswer("");
             }, 1200);
         } else {
             playSound('wrong');
@@ -290,17 +312,13 @@ function Game() {
             setTimeout(async () => {
                 stopSound('wrong');
                 const newPlayers = players.map(p => p.id === players[turn].id ? { ...p, failedAttempts: currentFailedAttempts + 1 } : p);
-
                 const nextTurn = (turn + 1) % players.length;
 
                 await supabase.from('games').update({
                     turn: nextTurn,
-                    phase: 'quiz',
+                    phase: 'quiz', // <-- KUNCI PHASE TETAP QUIZ
                     players: newPlayers
                 }).eq('id', gameId);
-
-                setAnswerFeedback(null);
-                setQuizAnswer("");
             }, 1500);
         }
     };
@@ -400,7 +418,6 @@ function Game() {
                 </button>
             )}
 
-            {/* FIX: TAMPILAN MATCH OVER DILEBARIN (MAX-W-3XL) DAN GRID MENYAMPING */}
             {finished && phase !== 'cancelled' ? (
                 <div className="bg-[#1e2329] p-8 md:p-12 rounded-[3rem] border-8 border-yellow-400 text-center shadow-2xl animate-fade-in w-full max-w-4xl relative z-20 mx-4">
                     <h1 className="text-4xl md:text-6xl font-black text-white mb-2 italic uppercase tracking-tighter">
@@ -411,7 +428,6 @@ function Game() {
                         Pemenangnya adalah {gameState.players.slice().sort((a, b) => b.position - a.position)[0].name}!
                     </h2>
 
-                    {/* Bikin Grid menyamping biar gak manjang kebawah banget */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-10 text-left">
                         {gameState.players.slice().sort((a, b) => b.position - a.position).map((p, idx) => {
                             let medal = "🐢";
@@ -419,13 +435,11 @@ function Game() {
                             if (idx === 1) medal = "🥈";
                             if (idx === 2) medal = "🥉";
 
-                            // Deteksi Juara 1
                             const isWinner = idx === 0;
 
                             return (
                                 <div key={p.id} className={`flex items-center justify-between gap-4 p-4 md:p-5 rounded-2xl border-b-4 transition-transform ${isWinner ? 'bg-gradient-to-r from-yellow-300 to-yellow-500 border-yellow-600 scale-105 shadow-[0_0_30px_rgba(250,204,21,0.6)] z-10' : 'bg-white border-slate-300'}`}>
                                     <span className={`font-black text-xl md:text-2xl flex items-center gap-3 truncate ${isWinner ? 'text-slate-900' : 'text-slate-800'}`}>
-                                        {/* Piala Emas joget */}
                                         <span className={isWinner ? "text-4xl drop-shadow-md animate-bounce" : "text-3xl"}>{medal}</span>
                                         <span>#{idx + 1} {p.name}</span>
                                     </span>
@@ -457,6 +471,7 @@ function Game() {
                     answerFeedback={answerFeedback}
                     isMyTurn={isMyTurn}
                     activePlayerName={activePlayerName}
+                    timeLeft={timeLeft}
                 />
             )}
         </main>
