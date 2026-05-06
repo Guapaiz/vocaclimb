@@ -55,7 +55,7 @@ function Game() {
     const [quizAnswer, setQuizAnswer] = useState("");
     const [liveAnswer, setLiveAnswer] = useState(""); // State buat nampung ketikan live di layar guru
     const [answerFeedback, setAnswerFeedback] = useState(null);
-    const [timeLeft, setTimeLeft] = useState(30);
+    const [timeLeft, setTimeLeft] = useState(60);
 
     const [bankSoal, setBankSoal] = useState([]);
 
@@ -152,7 +152,7 @@ function Game() {
 
     // JURUS AUTO-RESET TIAP GANTI GILIRAN
     useEffect(() => {
-        setTimeLeft(30);
+        setTimeLeft(60);
         setQuizAnswer("");
         setLiveAnswer(""); // Reset juga jawaban di layar guru
         setAnswerFeedback(null);
@@ -176,7 +176,7 @@ function Game() {
                 });
             }, 1000);
         } else if (gameState?.phase !== 'quiz') {
-            setTimeLeft(30);
+            setTimeLeft(60);
         }
         return () => clearInterval(timer);
     }, [gameState?.phase, answerFeedback, isMyTurnCheck]);

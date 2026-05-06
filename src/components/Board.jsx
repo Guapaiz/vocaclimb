@@ -135,7 +135,7 @@ const Board = ({
 
                             {currentFailedAttempts > 0 && (
                                 <div className="w-full flex flex-col items-center mt-1 animate-fade-in flex-none">
-                                    <span className="text-[10px] lg:text-xs 2xl:text-lg font-black text-orange-500 uppercase tracking-widest mb-1">Bantuan Huruf Acak:</span>
+                                    <span className="text-[10px] lg:text-xs 2xl:text-lg font-black text-orange-500 uppercase tracking-widest mb-1">Petunjuk (Clue)</span>
                                     <div className="flex flex-wrap gap-1 justify-center">
                                         {activeQuestion.jawaban.split('').map((char, index) => {
                                             if (char === ' ') return <span key={index} className="w-3 lg:w-4"></span>;
