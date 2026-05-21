@@ -372,7 +372,7 @@ function Lobby() {
                                             className="flex-1 h-[200px] bg-[#2ea05b] hover:bg-[#258249] rounded-2xl flex flex-col items-center justify-center transition-all hover:-translate-y-1 shadow-lg active:scale-95 disabled:opacity-50 group border border-[#40b870] relative overflow-hidden"
                                         >
                                             <GamepadIcon />
-                                            <span className="font-black text-2xl mt-1 text-white group-hover:scale-105 transition-transform">Buat Game Baru</span>
+                                            <span className="font-black text-2xl mt-1 text-white group-hover:scale-105 transition-transform">Mulai Game Baru</span>
                                         </button>
 
                                         <div className="flex-1 h-[200px] bg-[#187bb0] rounded-2xl flex flex-col items-center justify-center p-6 shadow-lg border border-[#2b9eda] relative overflow-hidden">

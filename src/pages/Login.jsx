@@ -9,10 +9,8 @@ function Login() {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        // Password sementaranya "gurukeren123"
         if (password === 'gurukeren123') {
             localStorage.setItem('is_guru_logged_in', 'true');
-            // 👇 INI YANG DIUBAH! Balikin ke Root (Lobby) 👇
             navigate('/');
         } else {
             setError('Password salah le! Coba lagi.');

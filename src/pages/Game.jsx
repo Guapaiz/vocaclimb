@@ -128,13 +128,13 @@ function Game() {
                 setGameState(payload.new);
             }
         )
-        .on('broadcast', { event: 'typing' }, (payload) => {
-            // Kalau yang buka adalah guru/host, update tampilan layar dengan ketikan murid
-            if (localStorage.getItem(`tanggapoly_player_id_${gameId}`) === 'host') {
-                setLiveAnswer(payload.payload.text);
-            }
-        })
-        .subscribe();
+            .on('broadcast', { event: 'typing' }, (payload) => {
+                // Kalau yang buka adalah guru/host, update tampilan layar dengan ketikan murid
+                if (localStorage.getItem(`tanggapoly_player_id_${gameId}`) === 'host') {
+                    setLiveAnswer(payload.payload.text);
+                }
+            })
+            .subscribe();
 
         return () => { supabase.removeChannel(channel); };
     }, [gameId, navigate]);
@@ -186,7 +186,7 @@ function Game() {
         setAnswerFeedback("timeout");
 
         const { data: latestGame } = await supabase.from('games').select('*').eq('id', gameId).single();
-        if(!latestGame) return;
+        if (!latestGame) return;
 
         const { turn, players } = latestGame;
         const currentFailedAttempts = players[turn].failedAttempts || 0;
@@ -210,6 +210,11 @@ function Game() {
             setSpinning(true);
             playSound('roll');
 
+            // Hitung batas animasi biar sinkron sama logika dadu aslinya
+            const currentPlayer = gameState.players[gameState.turn];
+            const distanceToFinish = TARGET_FINISH - (currentPlayer?.position || 0);
+            // Pake Math.max(1, ...) buat safety net aja in case ada delay state
+            const maxDiceAnimation = Math.min(6, Math.max(1, distanceToFinish));
             const animationInterval = setInterval(() => {
                 setVisualDice([Math.floor(Math.random() * 6) + 1]);
             }, 100);
@@ -350,7 +355,11 @@ function Game() {
 
     const rollDice = async () => {
         if (rolling || !gameState || gameState.phase !== 'dice' || (gameState.turn + 1) !== localPlayerId) return;
-        const d1 = Math.floor(Math.random() * 6) + 1;
+        const currentPlayer = gameState.players[gameState.turn];
+        const currentPosition = currentPlayer.position;
+        const distanceToFinish = TARGET_FINISH - currentPosition;
+        const maxDice = Math.min(6, distanceToFinish);
+        const d1 = Math.floor(Math.random() * maxDice) + 1;
         await supabase.from('games').update({ diceRoll: [d1], is_rolling: true }).eq('id', gameId);
     };
 
