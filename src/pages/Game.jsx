@@ -210,11 +210,7 @@ function Game() {
             setSpinning(true);
             playSound('roll');
 
-            // Hitung batas animasi biar sinkron sama logika dadu aslinya
-            const currentPlayer = gameState.players[gameState.turn];
-            const distanceToFinish = TARGET_FINISH - (currentPlayer?.position || 0);
-            // Pake Math.max(1, ...) buat safety net aja in case ada delay state
-            const maxDiceAnimation = Math.min(6, Math.max(1, distanceToFinish));
+            // Eksekusi animasi murni 1-6 biar dadu muter natural
             const animationInterval = setInterval(() => {
                 setVisualDice([Math.floor(Math.random() * 6) + 1]);
             }, 100);
