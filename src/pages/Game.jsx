@@ -42,28 +42,21 @@ function Game() {
 
     const [gameState, setGameState] = useState(null);
     const [loading, setLoading] = useState(true);
-
     const [rolling, setRolling] = useState(false);
     const [spinning, setSpinning] = useState(false);
-
     const [localPlayerId, setLocalPlayerId] = useState(null);
     const [copied, setCopied] = useState(false);
-
     const [visualDice, setVisualDice] = useState([1]);
     const [visualPlayers, setVisualPlayers] = useState(null);
-
     const [quizAnswer, setQuizAnswer] = useState("");
-    const [liveAnswer, setLiveAnswer] = useState(""); // State buat nampung ketikan live di layar guru
+    const [liveAnswer, setLiveAnswer] = useState("");
     const [answerFeedback, setAnswerFeedback] = useState(null);
     const [timeLeft, setTimeLeft] = useState(60);
-
     const [bankSoal, setBankSoal] = useState([]);
-
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showConfirmExitModal, setShowConfirmExitModal] = useState(false);
 
     const [hasPlayedStartSound, setHasPlayedStartSound] = useState(false);
-
     const blocker = useBlocker(
         ({ currentLocation, nextLocation }) =>
             gameState && !gameState.finished &&
@@ -282,11 +275,39 @@ function Game() {
         const { turn, players } = gameState;
         const isFinished = finalPos >= TARGET_FINISH;
 
-        if (isFinished) playSound('win');
-
+        // Bikin array baru dengan update posisi dan skor (kalau dia menang +10)
         const newPlayers = players.map(p => p.id === players[turn].id ? { ...p, position: finalPos, score: p.score + 10 } : p);
+
+        if (isFinished) {
+            playSound('win');
+
+            // --- ARSITEKTUR HYBRID: REKAM SKOR RELASIONAL SAAT FINISH ---
+            // Urutkan kloningan array player baru berdasarkan posisi terjauh untuk menentukan ranking
+            const sortedPlayers = [...newPlayers].sort((a, b) => b.position - a.position);
+
+            const historyRecords = newPlayers.map(p => {
+                const ranking = sortedPlayers.findIndex(sp => sp.id === p.id) + 1;
+                return {
+                    id_game: gameId,
+                    nama_pemain: p.name,
+                    skor_akhir: p.score,
+                    ranking: ranking
+                };
+            });
+
+            // Kirim data rekam jejak skor ke tabel history_skor
+            const { error: historyError } = await supabase
+                .from('history_skor')
+                .insert(historyRecords);
+
+            if (historyError) {
+                console.error("Gagal mencatat riwayat skor ke database:", historyError);
+            }
+        }
+
         const nextTurn = (turn + 1) % players.length;
 
+        // Core gameplay loop tetep pakai SINGLE WRITE OPERATION
         await supabase.from('games').update({
             players: newPlayers,
             turn: isFinished ? turn : nextTurn,

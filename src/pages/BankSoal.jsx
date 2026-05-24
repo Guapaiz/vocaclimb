@@ -37,6 +37,7 @@ const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h
 const EditIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>);
 const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>);
 const ResetIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>);
+const WarningIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>);
 
 function BankSoal() {
     const navigate = useNavigate();
@@ -48,6 +49,9 @@ function BankSoal() {
     const [formData, setFormData] = useState({ soal: '', jawaban: '', gambar: '' });
 
     const [uploadFile, setUploadFile] = useState(null);
+
+    // State untuk modal konfirmasi reset
+    const [showResetModal, setShowResetModal] = useState(false);
 
     useEffect(() => {
         if (localStorage.getItem('is_guru_logged_in') !== 'true') {
@@ -70,22 +74,25 @@ function BankSoal() {
         setLoading(false);
     };
 
-    const handleResetDefault = async () => {
-        if (window.confirm("Yakin mau mereset semua soal ke kosa kata buah-buahan awal? Semua editan kamu akan terhapus lho!")) {
-            setLoading(true);
+    const promptResetDefault = () => {
+        setShowResetModal(true);
+    };
 
-            // 1. Timpa/Insert data 1-23
-            const { error } = await supabase.from('bank_soal').upsert(defaultSoalData);
+    const executeResetDefault = async () => {
+        setShowResetModal(false);
+        setLoading(true);
 
-            if (error) {
-                alert("Gagal mereset soal ke default!");
-                console.error(error);
-                setLoading(false);
-            } else {
-                // 2. Sapu bersih sisa data kalo sempet ada yg nyampe 24, 25 dst
-                await supabase.from('bank_soal').delete().gt('id', 23);
-                fetchSoals();
-            }
+        // 1. Timpa/Insert data 1-23
+        const { error } = await supabase.from('bank_soal').upsert(defaultSoalData);
+
+        if (error) {
+            alert("Gagal mereset soal ke default!");
+            console.error(error);
+            setLoading(false);
+        } else {
+            // 2. Sapu bersih sisa data kalo sempet ada yg nyampe 24, 25 dst
+            await supabase.from('bank_soal').delete().gt('id', 23);
+            fetchSoals();
         }
     };
 
@@ -145,16 +152,18 @@ function BankSoal() {
     };
 
     return (
-        <main className="min-h-screen bg-[#1e2329] text-white flex flex-col relative overflow-hidden">
+        // FIX: Menggunakan h-screen agar layar tidak melar dan overflow ditangani oleh div pembungkus list
+        <main className="h-screen bg-[#1e2329] text-white flex flex-col relative overflow-hidden">
 
-            <header className="w-full bg-[#2a3038] py-4 px-8 flex items-center shadow-md z-10 border-b border-gray-700 gap-4">
+            {/* FIX: Z-Index diubah ke 50 biar header selalu ada di atas saat di scroll */}
+            <header className="w-full bg-[#2a3038] py-4 px-8 flex items-center shadow-md z-50 border-b border-gray-700 gap-4 relative">
                 <button onClick={() => navigate('/')} className="text-gray-400 hover:text-emerald-400 transition-colors">
                     <BackIcon />
                 </button>
                 <h1 className="text-2xl font-black tracking-tighter text-white">BANK <span className="text-emerald-500">SOAL</span></h1>
 
                 <button
-                    onClick={handleResetDefault}
+                    onClick={promptResetDefault}
                     disabled={loading}
                     className="ml-auto bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white px-5 py-2.5 rounded-full font-black text-xs md:text-sm transition-all shadow-md active:scale-95 flex items-center gap-2 border border-red-500/30 hover:border-red-600 disabled:opacity-50"
                 >
@@ -162,6 +171,7 @@ function BankSoal() {
                 </button>
             </header>
 
+            {/* Area List Soal dengan Scroll Independen */}
             <div className="flex-1 p-8 overflow-y-auto z-10 relative">
                 <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
 
@@ -206,6 +216,7 @@ function BankSoal() {
                 </div>
             </div>
 
+            {/* MODAL UBAH SOAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-[#2a3038] w-full max-w-md rounded-3xl border border-gray-600 shadow-2xl p-8 relative max-h-[90vh] overflow-y-auto">
@@ -275,6 +286,23 @@ function BankSoal() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL CUSTOM UNTUK RESET DEFAULT */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+                    <div className="bg-[#2a3038] w-full max-w-md rounded-[2rem] border-4 border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.15)] p-8 text-center flex flex-col items-center">
+                        <div className="bg-yellow-500/10 p-4 rounded-full mb-6">
+                            <WarningIcon />
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Yakin mau mereset?</h2>
+                        <p className="text-gray-400 font-bold mb-8 text-sm">Semua soal akan kembali ke kosa kata awal bawaan pabrik. Semua soal yang sudah kamu ubah akan hilang!</p>
+                        <div className="flex w-full gap-4">
+                            <button onClick={() => setShowResetModal(false)} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-black text-lg rounded-xl transition-all">Batal</button>
+                            <button onClick={executeResetDefault} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">Ya, Reset!</button>
+                        </div>
                     </div>
                 </div>
             )}
