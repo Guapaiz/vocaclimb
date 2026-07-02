@@ -146,7 +146,7 @@ function Home() {
                 <img src={tanggaBg} alt="" className="absolute left-[3%] top-[5%] h-[45%] w-auto opacity-[0.06] grayscale mix-blend-overlay object-contain" />
                 <img src={ularBg} alt="" className="absolute -right-[2%] top-[-5%] w-[35%] max-w-[350px] opacity-[0.06] grayscale rotate-[-20deg] mix-blend-overlay object-contain rotate-6" />
                 <img src={tanggamiringBg} alt="" className="absolute right-[-3%] -bottom-[7%] h-[60%] w-auto opacity-[0.06] grayscale mix-blend-overlay object-contain" />
-                <img src="/assets/semangka.svg" alt="" className="absolute -left-[3%] bottom-[15%] h-[15%] w-auto opacity-[0.06] rotate-[-25deg] grayscale mix-blend-overlay object-contain"/>
+                <img src="/assets/semangka.svg" alt="" className="absolute -left-[3%] bottom-[15%] h-[15%] w-auto opacity-[0.06] rotate-[-25deg] grayscale mix-blend-overlay object-contain" />
             </div>
 
             <header className="w-full bg-[#2a3038] py-3 px-8 flex justify-between items-center shadow-md z-20 border-b border-gray-700 relative">
@@ -200,7 +200,7 @@ function Home() {
                                     <div className="flex-1 h-[200px] bg-[#187bb0] rounded-2xl flex flex-col items-center justify-center p-6 shadow-lg border border-[#2b9eda] relative overflow-hidden">
                                         <input type="text" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="KODE" maxLength={6} className="bg-[#2a3038] text-white text-center py-2.5 px-6 rounded-full font-black text-lg tracking-[0.2em] outline-none focus:ring-2 focus:ring-white/50 w-40 uppercase placeholder-gray-500 mb-4 transition-all shadow-inner relative z-10" />
                                         <button onClick={submitJoinGame} disabled={loading} className="w-full flex flex-col items-center justify-center rounded-xl transition-all active:scale-95 group relative z-10">
-                                            <span className="font-black text-2xl leading-snug text-white group-hover:scale-105 transition-transform">{loading ? 'TUNGGU...' : <>Klik untuk<br/>Bergabung</>}</span>
+                                            <span className="font-black text-2xl leading-snug text-white group-hover:scale-105 transition-transform">{loading ? 'TUNGGU...' : <>Klik untuk<br />Bergabung</>}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -215,16 +215,105 @@ function Home() {
                     <div className="bg-[#2a3038] w-full max-w-lg rounded-3xl border border-gray-600 shadow-2xl p-6 md:p-8 relative max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6 border-b border-gray-700 pb-4 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="bg-emerald-500/20 p-3 rounded-full text-emerald-400"><QuestionIcon /></div>
-                                <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-widest">Cara Bermain</h2>
+                                <div className="bg-emerald-500/20 p-3 rounded-full text-emerald-400">
+                                    <QuestionIcon />
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-widest">
+                                    Cara Bermain
+                                </h2>
                             </div>
-                            <button onClick={() => setShowRules(false)} className="text-gray-400 hover:text-red-400 bg-gray-700/30 hover:bg-red-500/20 p-2.5 rounded-xl transition-all"><CloseIcon /></button>
+
+                            <button
+                                onClick={() => setShowRules(false)}
+                                className="text-gray-400 hover:text-red-400 bg-gray-700/30 hover:bg-red-500/20 p-2.5 rounded-xl transition-all"
+                            >
+                                <CloseIcon />
+                            </button>
                         </div>
+
                         <div className="space-y-4 text-left text-gray-300 font-medium relative z-10">
-                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700"><h3 className="text-emerald-400 font-bold mb-1">1. Kumpulkan Pasukan 👥</h3><p className="text-sm">Satu orang membuat game, sisanya bergabung menggunakan KODE unik. Game bisa dimulai jika sudah ada minimal 2 player dan maksimal 4 player!</p></div>
-                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700"><h3 className="text-emerald-400 font-bold mb-1">2. Jawab Kuisnya! 🧠</h3><p className="text-sm">Saat giliranmu tiba, kamu <span className="text-white font-bold">wajib</span> menjawab pertanyaan kuis terlebih dahulu dengan benar untuk bisa lanjut.</p></div>
+
+                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700">
+                                <h3 className="text-emerald-400 font-bold mb-1">
+                                    1. Bergabung ke Permainan 👥
+                                </h3>
+                                <p className="text-sm">
+                                    Salah satu pemain membuat permainan, kemudian pemain lainnya
+                                    bergabung menggunakan <span className="text-white font-bold">kode permainan</span>.
+                                    Permainan dapat dimulai jika terdapat minimal
+                                    <span className="text-white font-bold"> 2 pemain</span> dan maksimal
+                                    <span className="text-white font-bold"> 4 pemain</span>.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700">
+                                <h3 className="text-emerald-400 font-bold mb-1">
+                                    2. Jawab Pertanyaan 🧠
+                                </h3>
+                                <p className="text-sm">
+                                    Pada setiap giliran, pemain akan diberikan satu pertanyaan
+                                    kosakata. Jawaban yang benar memberikan kesempatan untuk
+                                    melanjutkan permainan.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700">
+                                <h3 className="text-emerald-400 font-bold mb-1">
+                                    3. Lempar Dadu 🎲
+                                </h3>
+                                <p className="text-sm">
+                                    Jika jawaban
+                                    <span className="text-emerald-400 font-bold"> benar</span>,
+                                    pemain dapat melempar dadu dan maju sesuai jumlah mata dadu.
+                                    Jika jawaban
+                                    <span className="text-red-400 font-bold"> belum benar</span>,
+                                    giliran akan berpindah kepada pemain berikutnya.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700">
+                                <h3 className="text-emerald-400 font-bold mb-1">
+                                    4. Perhatikan Ular dan Tangga 🐍🪜
+                                </h3>
+                                <p className="text-sm">
+                                    Jika pemain berhenti pada kotak tangga, pemain akan naik ke
+                                    posisi yang lebih tinggi. Sebaliknya, jika berhenti pada kepala
+                                    ular, pemain akan turun ke posisi yang telah ditentukan.
+                                </p>
+                            </div>
+
+                            <div className="bg-[#1e2329] p-4 rounded-xl border border-gray-700">
+                                <h3 className="text-emerald-400 font-bold mb-1">
+                                    5. Raih Garis Finish 🏆
+                                </h3>
+                                <p className="text-sm">
+                                    Pemain yang pertama mencapai atau melewati kotak
+                                    <span className="text-white font-bold"> Finish</span>
+                                    akan menjadi pemenang permainan.
+                                </p>
+                            </div>
+
+                            {/* Informasi Guru */}
+                            <div className="bg-[#2d2416] p-4 rounded-xl border border-amber-500/40">
+                                <h3 className="text-amber-400 font-bold mb-1">
+                                    🔑 Informasi Akses Guru
+                                </h3>
+                                <p className="text-sm">
+                                    Untuk mengakses <span className="text-white font-bold">Menu Guru</span>,
+                                    gunakan kata sandi:
+                                    <span className="text-amber-300 font-bold"> gurukeren123</span>.
+                                    Menu Guru digunakan untuk mengelola soal dan data permainan.
+                                </p>
+                            </div>
+
                         </div>
-                        <button onClick={() => setShowRules(false)} className="w-full mt-6 py-3 bg-[#187bb0] hover:bg-[#13618c] text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(19,97,140)] active:translate-y-1 active:shadow-none transition-all uppercase tracking-widest relative z-10">Saya Mengerti!</button>
+
+                        <button
+                            onClick={() => setShowRules(false)}
+                            className="w-full mt-6 py-3 bg-[#187bb0] hover:bg-[#13618c] text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(19,97,140)] active:translate-y-1 active:shadow-none transition-all uppercase tracking-widest relative z-10"
+                        >
+                            Saya Mengerti
+                        </button>
                     </div>
                 </div>
             )}

@@ -107,7 +107,6 @@ function Game() {
 
         fetchInitialGame();
 
-        // FIX: Konfigurasi Supabase buat nangkap fitur Broadcast (CCTV Guru)
         const channel = supabase.channel(`game-room-${gameId}`, {
             config: { broadcast: { ack: false } }
         });
@@ -122,7 +121,6 @@ function Game() {
             }
         )
             .on('broadcast', { event: 'typing' }, (payload) => {
-                // Kalau yang buka adalah guru/host, update tampilan layar dengan ketikan murid
                 if (localStorage.getItem(`tanggapoly_player_id_${gameId}`) === 'host') {
                     setLiveAnswer(payload.payload.text);
                 }
@@ -143,36 +141,49 @@ function Game() {
         }
     }, [gameState?.phase, hasPlayedStartSound]);
 
-    // JURUS AUTO-RESET TIAP GANTI GILIRAN
     useEffect(() => {
         setTimeLeft(60);
         setQuizAnswer("");
-        setLiveAnswer(""); // Reset juga jawaban di layar guru
+        setLiveAnswer("");
         setAnswerFeedback(null);
     }, [gameState?.turn]);
 
     const isMyTurnCheck = gameState ? (gameState.turn + 1) === localPlayerId : false;
     const isHost = localPlayerId === 'host';
 
-    // LOGIKA COUNTDOWN YANG LEBIH STABIL
+    // LOGIKA COUNTDOWN ANTI-CHEAT (TAHAN BADAI REFRESH)
     useEffect(() => {
         let timer;
+
         if (gameState?.phase === 'quiz' && !answerFeedback) {
+            const activePlayer = gameState.players[gameState.turn];
+            const turnSignature = `${gameState.turn}_${activePlayer.position}_${activePlayer.failedAttempts || 0}`;
+            const storageKey = `tanggapoly_deadline_${gameId}_${turnSignature}`;
+
+            let deadline = localStorage.getItem(storageKey);
+
+            if (!deadline) {
+                deadline = Date.now() + 60000;
+                localStorage.setItem(storageKey, deadline);
+            }
+
             timer = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        if (isMyTurnCheck) executeTimeUp();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((parseInt(deadline) - now) / 1000));
+
+                setTimeLeft(remaining);
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    if (isMyTurnCheck) executeTimeUp();
+                }
             }, 1000);
         } else if (gameState?.phase !== 'quiz') {
             setTimeLeft(60);
         }
+
         return () => clearInterval(timer);
-    }, [gameState?.phase, answerFeedback, isMyTurnCheck]);
+    }, [gameState?.phase, gameState?.turn, gameState?.players, answerFeedback, isMyTurnCheck, gameId]);
 
     const executeTimeUp = async () => {
         playSound('wrong');
@@ -203,7 +214,6 @@ function Game() {
             setSpinning(true);
             playSound('roll');
 
-            // Eksekusi animasi murni 1-6 biar dadu muter natural
             const animationInterval = setInterval(() => {
                 setVisualDice([Math.floor(Math.random() * 6) + 1]);
             }, 100);
@@ -275,14 +285,11 @@ function Game() {
         const { turn, players } = gameState;
         const isFinished = finalPos >= TARGET_FINISH;
 
-        // Bikin array baru dengan update posisi dan skor (kalau dia menang +10)
         const newPlayers = players.map(p => p.id === players[turn].id ? { ...p, position: finalPos, score: p.score + 10 } : p);
 
         if (isFinished) {
             playSound('win');
 
-            // --- ARSITEKTUR HYBRID: REKAM SKOR RELASIONAL SAAT FINISH ---
-            // Urutkan kloningan array player baru berdasarkan posisi terjauh untuk menentukan ranking
             const sortedPlayers = [...newPlayers].sort((a, b) => b.position - a.position);
 
             const historyRecords = newPlayers.map(p => {
@@ -295,7 +302,6 @@ function Game() {
                 };
             });
 
-            // Kirim data rekam jejak skor ke tabel history_skor
             const { error: historyError } = await supabase
                 .from('history_skor')
                 .insert(historyRecords);
@@ -307,7 +313,6 @@ function Game() {
 
         const nextTurn = (turn + 1) % players.length;
 
-        // Core gameplay loop tetep pakai SINGLE WRITE OPERATION
         await supabase.from('games').update({
             players: newPlayers,
             turn: isFinished ? turn : nextTurn,
@@ -319,10 +324,8 @@ function Game() {
         setRolling(false);
     };
 
-    // FUNGSI BARU: Nangkep ketikan murid dan broadcast ke guru secara gaib
     const handleAnswerChange = (text) => {
         setQuizAnswer(text);
-        // Kirim event 'typing' langsung ke channel tanpa nyentuh database
         supabase.channel(`game-room-${gameId}`).send({
             type: 'broadcast',
             event: 'typing',
@@ -437,7 +440,7 @@ function Game() {
     const activeQuestion = getQuestionForPosition(gameState.players[turn]?.position);
 
     return (
-        <main className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center overflow-hidden p-4 relative">
+        <main className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center overflow-hidden p-2 pt-16 md:p-4 relative">
             {showCancelModal && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
                     <div className="bg-[#2a3038] w-full max-w-md rounded-[2rem] border-4 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.3)] p-8 text-center flex flex-col items-center">
@@ -464,8 +467,12 @@ function Game() {
             )}
 
             {!finished && phase !== 'cancelled' && (
-                <button onClick={promptForceExit} className="absolute top-4 right-4 z-50 bg-red-600/80 hover:bg-red-500 text-white p-3 rounded-full shadow-lg transition-all active:scale-90 backdrop-blur-sm border border-red-400" title="Keluar Permainan">
-                    <FaTimes size={20} />
+                <button
+                    onClick={promptForceExit}
+                    className="fixed top-2 right-2 md:top-4 md:right-4 z-[100] bg-red-600/80 hover:bg-red-500 text-white p-2 md:p-3 rounded-full shadow-lg transition-all active:scale-90 backdrop-blur-sm border border-red-400"
+                    title="Keluar Permainan"
+                >
+                    <FaTimes className="text-base md:text-xl" />
                 </button>
             )}
 
@@ -517,12 +524,12 @@ function Game() {
                     onRoll={rollDice}
                     activeQuestion={activeQuestion}
                     quizAnswer={quizAnswer}
-                    handleAnswerChange={handleAnswerChange} // Props baru buat nangkep ketikan murid
+                    handleAnswerChange={handleAnswerChange}
                     submitQuiz={submitQuiz}
                     answerFeedback={answerFeedback}
                     isMyTurn={isMyTurn}
-                    isHost={isHost} // Ngasih tau board kalau yang buka ini guru
-                    liveAnswer={liveAnswer} // Prop buat nampilin ketikan
+                    isHost={isHost}
+                    liveAnswer={liveAnswer}
                     activePlayerName={activePlayerName}
                     timeLeft={timeLeft}
                 />

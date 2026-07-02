@@ -91,58 +91,57 @@ function Lobby() {
 
     const isReadyToStart = gameData.players.length >= 2;
     const isHost = currentPlayerId === 'host' || localStorage.getItem(`tanggapoly_is_creator_${gameId}`) === 'true';
-
     return (
         <main className="min-h-screen bg-[#1e2329] flex items-center justify-center p-4">
-            <div className="bg-[#2a3038] p-8 rounded-3xl shadow-2xl w-full max-w-md text-center animate-fade-in border border-gray-700 relative z-20">
+            <div className="bg-[#2a3038] p-5 sm:p-8 rounded-3xl shadow-2xl w-full max-w-md text-center animate-fade-in border border-gray-700 relative z-20">
                 <button onClick={promptQuitLobby} className="absolute top-4 right-4 text-gray-500 hover:text-red-400 p-2 transition-colors" title="Batalkan Lobi">
                     <CloseIcon />
                 </button>
 
-                <h2 className="text-2xl font-black mb-4 text-emerald-400 uppercase tracking-widest">Lobi Menunggu</h2>
+                <h2 className="text-xl sm:text-2xl font-black mb-4 text-emerald-400 uppercase tracking-widest">Lobi Menunggu</h2>
 
                 {currentPlayerId === 'host' && (
-                    <div className="mb-4 bg-emerald-500/20 text-emerald-400 text-xs font-bold py-1.5 px-4 rounded-full inline-block border border-emerald-500/30">
+                    <div className="mb-4 bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold py-1.5 px-4 rounded-full inline-block border border-emerald-500/30">
                         Anda bertindak sebagai PENGAWAS
                     </div>
                 )}
 
-                <div className="flex flex-col items-center justify-center gap-2 bg-[#1e2329] rounded-2xl p-5 mb-8 border border-gray-700">
-                    <p className="text-sm font-extrabold text-gray-400 uppercase">Kode Permainan</p>
-                    <div className="flex items-center gap-4">
-                        <span className="font-mono text-5xl font-black tracking-[0.2em] text-white">{gameData.join_code}</span>
-                        <button onClick={() => { navigator.clipboard.writeText(gameData.join_code); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="p-3 bg-gray-700/50 hover:bg-gray-600 rounded-xl transition-all active:scale-90">
+                <div className="flex flex-col items-center justify-center gap-2 bg-[#1e2329] rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 border border-gray-700">
+                    <p className="text-xs sm:text-sm font-extrabold text-gray-400 uppercase">Kode Permainan</p>
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
+                        <span className="font-mono text-4xl sm:text-5xl font-black tracking-[0.1em] sm:tracking-[0.2em] text-white">{gameData.join_code}</span>
+                        <button onClick={() => { navigator.clipboard.writeText(gameData.join_code); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="p-2 sm:p-3 bg-gray-700/50 hover:bg-gray-600 rounded-xl transition-all active:scale-90">
                             {copied ? <CheckIcon /> : <CopyIcon />}
                         </button>
                     </div>
                 </div>
 
-                <div className="text-left space-y-3 bg-[#1e2329]/50 p-5 rounded-2xl">
+                <div className="text-left space-y-3 bg-[#1e2329]/50 p-4 sm:p-5 rounded-2xl">
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-black text-gray-300 uppercase text-sm tracking-widest">Pemain Bergabung</h3>
-                        <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-extrabold">{gameData.players.length} / 4 Maks</span>
+                        <h3 className="font-black text-gray-300 uppercase text-xs sm:text-sm tracking-widest">Pemain Bergabung</h3>
+                        <span className="bg-emerald-500/20 text-emerald-400 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-extrabold">{gameData.players.length} / 4 Maks</span>
                     </div>
                     {gameData.players.map(p => (
-                        <div key={p.id} className="bg-[#2a3038] p-3 rounded-xl flex items-center gap-3 border border-gray-700 shadow-sm">
-                            <div className={`p-2 rounded-lg ${p.id === 1 ? 'bg-red-500/20 text-red-400' : p.id === 2 ? 'bg-blue-500/20 text-blue-400' : p.id === 3 ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                        <div key={p.id} className="bg-[#2a3038] p-2.5 sm:p-3 rounded-xl flex items-center gap-3 border border-gray-700 shadow-sm">
+                            <div className={`p-1.5 sm:p-2 rounded-lg ${p.id === 1 ? 'bg-red-500/20 text-red-400' : p.id === 2 ? 'bg-blue-500/20 text-blue-400' : p.id === 3 ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                                 <PlayerWaitIcon />
                             </div>
-                            <span className="font-extrabold text-white text-lg">{p.name}</span>
+                            <span className="font-extrabold text-white text-base sm:text-lg truncate">{p.name}</span>
                         </div>
                     ))}
                     {gameData.players.length === 0 && (
-                        <p className="text-center text-gray-500 text-sm font-bold italic py-2">Belum ada murid yang bergabung...</p>
+                        <p className="text-center text-gray-500 text-xs sm:text-sm font-bold italic py-2">Belum ada murid yang bergabung...</p>
                     )}
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-6 sm:mt-8">
                     {isHost ? (
-                        <button onClick={handleStartGame} disabled={!isReadyToStart} className={`w-full py-4 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 ${isReadyToStart ? 'bg-emerald-500 hover:bg-emerald-400 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
+                        <button onClick={handleStartGame} disabled={!isReadyToStart} className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-lg transition-all shadow-lg active:scale-95 ${isReadyToStart ? 'bg-emerald-500 hover:bg-emerald-400 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
                             {isReadyToStart ? 'M U L A I  G A M E' : `BUTUH ${2 - gameData.players.length} ORANG LAGI...`}
                         </button>
                     ) : (
-                        <div className="w-full py-4 bg-gray-700/50 rounded-xl font-extrabold text-gray-400 animate-pulse border border-gray-600">
-                            {isReadyToStart ? 'Menunggu Host memulai...' : `Butuh minimal ${2 - gameData.players.length} orang lagi...`}
+                        <div className="w-full py-3 sm:py-4 bg-gray-700/50 rounded-xl font-extrabold text-gray-400 animate-pulse border border-gray-600 text-sm sm:text-base">
+                            {isReadyToStart ? 'Menunggu Host...' : `Butuh minimal ${2 - gameData.players.length} orang lagi...`}
                         </div>
                     )}
                 </div>
@@ -151,15 +150,15 @@ function Lobby() {
             {/* MODAL CUSTOM UNTUK KELUAR DARI LOBI */}
             {showExitModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-                    <div className="bg-[#2a3038] w-full max-w-md rounded-[2rem] border-4 border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.15)] p-8 text-center flex flex-col items-center">
-                        <div className="bg-yellow-500/10 p-4 rounded-full mb-6">
+                    <div className="bg-[#2a3038] w-full max-w-md rounded-[2rem] border-4 border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.15)] p-6 sm:p-8 text-center flex flex-col items-center">
+                        <div className="bg-yellow-500/10 p-3 sm:p-4 rounded-full mb-4 sm:mb-6">
                             <WarningIcon />
                         </div>
-                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Yakin mau membatalkan?</h2>
-                        <p className="text-gray-400 font-bold mb-8 text-sm">Lobi ini akan ditutup dan semua temanmu akan dikeluarkan.</p>
-                        <div className="flex w-full gap-4">
-                            <button onClick={() => setShowExitModal(false)} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-black text-lg rounded-xl transition-all">Batal</button>
-                            <button onClick={executeQuitLobby} className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-lg rounded-xl shadow-[0_4px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">Ya, Keluar</button>
+                        <h2 className="text-xl sm:text-2xl font-black text-white mb-2 uppercase tracking-tight">Yakin membatalkan?</h2>
+                        <p className="text-gray-400 font-bold mb-6 sm:mb-8 text-xs sm:text-sm">Lobi ini akan ditutup dan semua temanmu akan dikeluarkan.</p>
+                        <div className="flex w-full gap-3 sm:gap-4">
+                            <button onClick={() => setShowExitModal(false)} className="flex-1 py-2 sm:py-3 bg-gray-700 hover:bg-gray-600 text-white font-black text-base sm:text-lg rounded-xl transition-all">Batal</button>
+                            <button onClick={executeQuitLobby} className="flex-1 py-2 sm:py-3 bg-red-600 hover:bg-red-500 text-white font-black text-base sm:text-lg rounded-xl shadow-[0_4px_0_rgb(153,27,27)] active:translate-y-1 active:shadow-none transition-all">Keluar</button>
                         </div>
                     </div>
                 </div>
