@@ -102,29 +102,45 @@ const Board = ({
                         ];
                         const cellColor = tileColors[cell.id % tileColors.length];
 
-                        // LUNAR MOD: Balik ke buah, teks sopan
                         const getDecoration = (id) => {
-                            if (id === 0 || id === 29) return null;
-
-                            const excludedCells = [3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 20, 21, 23, 26];
+                            // Abaikan kotak start (0), finish (29), dan kotak yang kena ular/tangga
+                            const excludedCells = [0, 3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 20, 21, 23, 26, 29];
                             if (excludedCells.includes(id)) return null;
 
-                            if (id % 2 === 0) {
-                                // Kata-kata sopan dan mendidik untuk kelas 2 SD
-                                const phrases = ["AYO BISA!", "LUAR BIASA!", "ANAK RAJIN!", "KAMU PINTAR!", "HEBAT!", "ANAK CERDAS!", "TETAP FOKUS!"];
-                                const phrase = phrases[(id / 2) % phrases.length];
+                            // KITA TENTUKAN MANUAL ISI TIAP KOTAK (HARDCODE)
+                            // Silakan ganti kata-katanya atau emojinya sesuka hati lo di sini
+                            const decorations = {
+                                1: { type: "icon", content: "🌽" },
+                                2: { type: "text", content: "TETAP FOKUS!" },
+                                5: { type: "icon", content: "🍍" },
+                                6: { type: "text", content: "TERUS MENCOBA!" },
+                                10: { type: "text", content: "TETAP TELITI!" },
+                                17: { type: "icon", content: "🥝" },
+                                18: { type: "text", content: "LUAR BIASA!" },
+                                19: { type: "icon", content: "🍇" },
+                                22: { type: "text", content: "KERJA BAGUS!" },
+                                24: { type: "text", content: "AYO BISA!" },
+                                25: { type: "icon", content: "🍓" },
+                                27: { type: "icon", content: "🥦" },
+                                28: { type: "text", content: "ANAK PINTAR!" }
+                            };
+
+                            const item = decorations[id];
+
+                            // Kalau kotaknya entah kenapa nggak ada di list atas, lewatin aja
+                            if (!item) return null;
+
+                            // Render sesuai tipenya (Teks atau Ikon)
+                            if (item.type === "text") {
                                 return (
-                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-sm 2xl:text-3xl font-black text-yellow-300 uppercase tracking-widest pointer-events-none z-0 w-full px-1 text-center leading-tight break-words drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-                                        {phrase}
+                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-sm 2xl:text-3xl font-black text-yellow-300 uppercase tracking-wide pointer-events-none z-0 w-full px-1 text-center leading-tight break-words drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
+                                        {item.content}
                                     </span>
                                 );
-                            } else {
-                                // Balik pakai Emoji Buah
-                                const icons = ["🍎", "🍌", "🍉", "🍇", "🍓", "🍍", "🥭", "🍒", "🍊", "🥝"];
-                                const icon = icons[id % icons.length];
+                            } else if (item.type === "icon") {
                                 return (
-                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-5xl 2xl:text-7xl opacity-60 drop-shadow-md pointer-events-none z-0">
-                                        {icon}
+                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-5xl 2xl:text-7xl opacity-130 drop-shadow-md pointer-events-none z-0">
+                                        {item.content}
                                     </span>
                                 );
                             }
@@ -139,10 +155,17 @@ const Board = ({
                                     {cell.label}
                                 </span>
 
-                                <div className="absolute inset-0 flex items-end justify-center pb-1 2xl:pb-3 pointer-events-none z-30">
-                                    <div className="flex flex-wrap gap-0.5 2xl:gap-1 justify-center items-center px-1">
+                                <div className="absolute inset-0 flex items-center justify-center pb-0.5 2xl:pb-2 pointer-events-none z-30">
+                                    {/* Container dibikin max-w-full biar gak jebol ke samping, item di-center */}
+                                    <div className="flex flex-wrap gap-0.5 sm:gap-1 2xl:gap-1.5 justify-center items-center px-1 w-full h-full content-end pb-1 2xl:pb-3">
                                         {players?.filter(p => p.position === cell.id).map((p) => (
-                                            <img key={p.id} src={getPionAsset(p.id)} alt={`Pion ${p.id}`} className="w-8 h-8 sm:w-12 sm:h-12 2xl:w-24 2xl:h-24 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-bounce" />
+                                            <img
+                                                key={p.id}
+                                                src={getPionAsset(p.id)}
+                                                alt={`Pion ${p.id}`}
+                                                // LUNAR FIX: Ukuran diperkecil drastis biar muat 4 pion (2x2 grid kasaran)
+                                                className="w-4 h-5 sm:w-6 sm:h-8 lg:w-7 lg:h-9 2xl:w-11 2xl:h-14 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-bounce"
+                                            />
                                         ))}
                                     </div>
                                 </div>
