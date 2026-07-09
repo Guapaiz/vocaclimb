@@ -89,31 +89,76 @@ const Board = ({
             <div className="w-full lg:w-auto h-auto lg:h-full aspect-[6/5] relative bg-[#4B2C85] p-2 md:p-3 2xl:p-8 rounded-[2rem] 2xl:rounded-[4rem] border-8 2xl:border-[16px] border-[#D32F2F] shadow-2xl flex-none overflow-hidden flex items-center justify-center mt-4 lg:mt-0">
                 <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
 
-                <div className="relative grid grid-cols-6 grid-rows-5 gap-0 bg-white border-4 2xl:border-8 border-orange-400 w-full h-full z-0">
-                    {boardData.map((row) => row.map((cell) => (
-                        <div key={cell.id} className="border border-orange-100 flex flex-col justify-start p-0.5 2xl:p-2 relative bg-white overflow-hidden">
-                            <span className={`absolute top-1 right-1.5 font-black leading-none z-10 text-right ${cell.label === "START" || cell.label === "FINISH" ? "text-slate-800 text-[10px] sm:text-xs 2xl:text-2xl tracking-tighter" : "text-gray-300 text-[9px] sm:text-[11px] 2xl:text-xl"}`}>
-                                {cell.label}
-                            </span>
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-2 z-30">
-                                <div className="flex flex-wrap gap-0 justify-center items-center">
-                                    {players?.filter(p => p.position === cell.id).map((p) => (
-                                        <img key={p.id} src={getPionAsset(p.id)} className="w-6 h-6 sm:w-8 sm:h-8 2xl:w-20 2xl:h-20 object-contain drop-shadow-md animate-bounce" />
-                                    ))}
+                <div className="relative grid grid-cols-6 grid-rows-5 gap-0.5 2xl:gap-1 bg-black border-4 2xl:border-8 border-black w-full h-full z-0">
+                    {boardData.map((row) => row.map((cell) => {
+
+                        const tileColors = [
+                            'bg-red-600',
+                            'bg-blue-600',
+                            'bg-green-600',
+                            'bg-yellow-500',
+                            'bg-purple-600',
+                            'bg-pink-600'
+                        ];
+                        const cellColor = tileColors[cell.id % tileColors.length];
+
+                        // LUNAR MOD: Balik ke buah, teks sopan
+                        const getDecoration = (id) => {
+                            if (id === 0 || id === 29) return null;
+
+                            const excludedCells = [3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 20, 21, 23, 26];
+                            if (excludedCells.includes(id)) return null;
+
+                            if (id % 2 === 0) {
+                                // Kata-kata sopan dan mendidik untuk kelas 2 SD
+                                const phrases = ["AYO BISA!", "LUAR BIASA!", "ANAK RAJIN!", "KAMU PINTAR!", "HEBAT!", "ANAK CERDAS!", "TETAP FOKUS!"];
+                                const phrase = phrases[(id / 2) % phrases.length];
+                                return (
+                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-sm 2xl:text-3xl font-black text-yellow-300 uppercase tracking-widest pointer-events-none z-0 w-full px-1 text-center leading-tight break-words drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
+                                        {phrase}
+                                    </span>
+                                );
+                            } else {
+                                // Balik pakai Emoji Buah
+                                const icons = ["🍎", "🍌", "🍉", "🍇", "🍓", "🍍", "🥭", "🍒", "🍊", "🥝"];
+                                const icon = icons[id % icons.length];
+                                return (
+                                    <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-5xl 2xl:text-7xl opacity-60 drop-shadow-md pointer-events-none z-0">
+                                        {icon}
+                                    </span>
+                                );
+                            }
+                        };
+
+                        return (
+                            <div key={cell.id} className={`flex flex-col justify-start p-1 2xl:p-3 relative overflow-hidden ${cellColor}`}>
+
+                                {getDecoration(cell.id)}
+
+                                <span className={`absolute ${cell.label === "START" || cell.label === "FINISH" ? "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/95 text-[14px] sm:text-2xl 2xl:text-[3rem] tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" : "top-1 right-2 2xl:top-2 2xl:right-4 text-white/90 text-[16px] sm:text-3xl 2xl:text-[4.5rem] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-right"} font-black leading-none z-10 pointer-events-none`}>
+                                    {cell.label}
+                                </span>
+
+                                <div className="absolute inset-0 flex items-end justify-center pb-1 2xl:pb-3 pointer-events-none z-30">
+                                    <div className="flex flex-wrap gap-0.5 2xl:gap-1 justify-center items-center px-1">
+                                        {players?.filter(p => p.position === cell.id).map((p) => (
+                                            <img key={p.id} src={getPionAsset(p.id)} alt={`Pion ${p.id}`} className="w-8 h-8 sm:w-12 sm:h-12 2xl:w-24 2xl:h-24 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-bounce" />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )))}
+                        );
+                    }))}
 
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '3%', left: '66%', width: '12%', height: '34%' }}><img src={gambarTangga} className="w-full h-full object-contain" /></div>
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '40%', left: '1%', width: '12%', height: '34%' }}><img src={gambarTangga} className="w-full h-full object-contain" /></div>
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '48%', left: '58%', width: '18%', height: '26%', transform: 'scaleX(-1) rotate(25deg)' }}><img src={gambarTanggaMiring} className="w-full h-full object-contain" /></div>
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '18%', left: '6%', width: '38%', height: '46%', transform: 'scaleX(-1) rotate(25deg)' }}><img src={gambarUlar} className="w-full h-full object-contain" /></div>
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '45%', left: '9%', width: '48%', height: '56%', transform: ' rotate(-50deg)' }}><img src={gambarUlarMangap} className="w-full h-full object-contain" /></div>
-                    <div className="absolute pointer-events-none z-10" style={{ bottom: '2%', left: '32%', width: '38%', height: '36%', transform: 'rotate(40deg)' }}><img src={gambarUlar} className="w-full h-full object-contain" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '3%', left: '66%', width: '12%', height: '34%' }}><img src={gambarTangga} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="tangga" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '40%', left: '1%', width: '12%', height: '34%' }}><img src={gambarTangga} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="tangga" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '48%', left: '58%', width: '18%', height: '26%', transform: 'scaleX(-1) rotate(25deg)' }}><img src={gambarTanggaMiring} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="tangga miring" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '18%', left: '6%', width: '38%', height: '46%', transform: 'scaleX(-1) rotate(25deg)' }}><img src={gambarUlar} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="ular" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '45%', left: '9%', width: '48%', height: '56%', transform: ' rotate(-50deg)' }}><img src={gambarUlarMangap} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="ular mangap" /></div>
+                    <div className="absolute pointer-events-none z-10" style={{ bottom: '2%', left: '32%', width: '38%', height: '36%', transform: 'rotate(40deg)' }}><img src={gambarUlar} className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,0,0,1)]" alt="ular" /></div>
                 </div>
 
-                {/* MODAL QUIZ: Muncul cuma buat Active Player ATAU Guru/Host */}
+                {/* MODAL QUIZ */}
                 {phase === "quiz" && activeQuestion && (isMyTurn || isHost) && (
                     <div className="fixed lg:absolute inset-0 z-[100] flex items-center justify-center p-2 lg:p-4 bg-black/80 lg:bg-black/60 lg:backdrop-blur-sm animate-fade-in">
                         <div className="bg-[#FFF9EB] w-full max-w-[320px] lg:max-w-[400px] 2xl:max-w-[500px] max-h-[95%] overflow-y-auto rounded-[2rem] 2xl:rounded-[3rem] border-[6px] 2xl:border-[10px] border-[#5D4037] shadow-2xl p-4 lg:p-4 2xl:p-8 flex flex-col items-center gap-2 lg:gap-2 2xl:gap-4 relative">
@@ -150,7 +195,6 @@ const Board = ({
                                 </div>
                             )}
 
-                            {/* LOGIKA PERBEDAAN TAMPILAN MURID VS GURU */}
                             <div className="w-full flex flex-col gap-2 mt-1 lg:mt-2 flex-none">
                                 {isMyTurn ? (
                                     <>
@@ -159,7 +203,6 @@ const Board = ({
                                     </>
                                 ) : isHost ? (
                                     <>
-                                        {/* TAMPILAN KHUSUS GURU: Box Biru Transparan nampilin tulisan murid secara live */}
                                         <div className="w-full text-center text-md lg:text-base 2xl:text-2xl font-black border-2 lg:border-4 border-blue-500/50 rounded-lg lg:rounded-xl py-2 lg:py-2 2xl:py-4 bg-blue-50 text-blue-900 shadow-inner uppercase min-h-[44px] 2xl:min-h-[72px] flex items-center justify-center break-words px-2">
                                             {liveAnswer || <span className="text-blue-300">Jawaban murid...</span>}
                                         </div>
