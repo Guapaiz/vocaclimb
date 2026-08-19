@@ -1,15 +1,20 @@
-name: Supabase Keep Alive
+name: Supabase Keep Alive & Self Renew
 
 on:
   schedule:
-    - cron: '0 0 */3 * *'
+    - cron: '0 0 */3 * *' # Berjalan otomatis tiap 3 hari
   workflow_dispatch:
 
 jobs:
-  ping-and-keep-active:
+  ping-and-auto-renew:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Mengizinkan bot melakukan push commit
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Ping Supabase Games Table
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
@@ -21,4 +26,15 @@ jobs:
           if [ "$HTTP_STATUS" -ne 200 ]; then
             echo "Error: Ping failed with status $HTTP_STATUS"
             exit 1
+          fi
+
+      - name: Auto-commit to reset 60-day GitHub timer
+        run: |
+          date +%Y-%m-%d > .github/keepalive.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "chrono: automated keepalive touch"
+            git push
           fi
