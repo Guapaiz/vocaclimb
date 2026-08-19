@@ -2,19 +2,14 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    - cron: '0 0 */3 * *' # Berjalan otomatis setiap 3 hari pukul 00:00 UTC
-  workflow_dispatch: # Mengizinkan trigger manual via tab Actions
+    - cron: '0 0 */3 * *'
+  workflow_dispatch:
 
 jobs:
   ping-and-keep-active:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Ping Supabase Games Table
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
@@ -27,6 +22,3 @@ jobs:
             echo "Error: Ping failed with status $HTTP_STATUS"
             exit 1
           fi
-
-      - name: Prevent GitHub 60-day Workflow Suspension
-        uses: gautamkrishnar/keepalive-workflow@v2
